@@ -1,0 +1,11 @@
+@ConfigServerProxy_HostAddress = http://localhost:5260
+
+GET {{ConfigServerProxy_HostAddress}}/config/my-app/dev/main
+Accept: application/json
+
+###
+
+GET {{ConfigServerProxy_HostAddress}}/config/dev/my-app-main.yml
+Accept: application/json
+
+###
