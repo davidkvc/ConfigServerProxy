@@ -7,7 +7,7 @@ Features:
 * **API compatibility** with Config Server
 * **Config caching** for when getting config from the actual deployed instance is too slow
 * **Automatic authentication** using OAuth2 client credentials flow
-* **UI** for viewing cached config and other things
+* **Utility UI** for viewing cached config and other things
 
 ## Run with docker
 
