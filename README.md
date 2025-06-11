@@ -7,6 +7,7 @@ Features:
 * **API compatibility** with Config Server
 * **Config caching** for when getting config from the actual deployed instance is too slow
 * **Automatic authentication** using OAuth2 client credentials flow
+* **UI** for viewing cached config and other things
 
 ## Run with docker
 
@@ -26,6 +27,8 @@ subpath. Your app can then get config from:
 
 * `/config/{application}/{profile}/{label}`
 * `/config/{label}/{application}-{profile}.yml`
+
+UI is available at http://localhost:8080/
 
 ## Configuration
 
