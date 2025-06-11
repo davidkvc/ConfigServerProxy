@@ -22,6 +22,7 @@ jobs:
         with:
           file: ./ConfigServerProxy/Dockerfile
           push: false
+          load: true
           tags: davidkvc/config-server-proxy:latest
 
       - name: Log in to Docker Hub
