@@ -35,5 +35,7 @@ UI is available at http://localhost:8080/
 Configuration is loaded from `config-server-proxy-config.json`.
 See `ConfigServerProxyConfig.cs` for config structure.
 
+Config is reloaded when the file is changed.
+
 TODO: properly document config
 
