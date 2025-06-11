@@ -19,16 +19,21 @@ public enum ConfigFormat
 public class ConfigCache : BackgroundService
 {
     private readonly HttpClient _httpClient;
-    private readonly ConfigServerProxyConfig _config;
+    private readonly IOptionsMonitor<ConfigServerProxyConfig> _config;
     private readonly ILogger<ConfigCache> _logger;
+    private readonly ClientAuthentication _clientAuthentication;
 
     private Dictionary<ConfigSpec, string> _cache = new();
 
-    public ConfigCache(HttpClient httpClient, IOptions<ConfigServerProxyConfig> config, ILogger<ConfigCache> logger)
+    public ConfigCache(HttpClient httpClient,
+        IOptionsMonitor<ConfigServerProxyConfig> config,
+        ILogger<ConfigCache> logger,
+        ClientAuthentication clientAuthentication)
     {
-        _config = config.Value;
+        _config = config;
         _httpClient = httpClient;
         _logger = logger;
+        _clientAuthentication = clientAuthentication;
     }
 
     public async Task<string?> GetConfig(ConfigSpec configSpec)
@@ -45,8 +50,9 @@ public class ConfigCache : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var fetchTasks = from env in _config.Environments
-                             from app in _config.Apps
+            var config = _config.CurrentValue;
+            var fetchTasks = from env in config.Environments
+                             from app in config.Apps
                              select FetchConfig(env.Key, env.Value, app.Key, app.Value, stoppingToken);
 
             await Task.WhenAll(fetchTasks);
@@ -83,7 +89,7 @@ public class ConfigCache : BackgroundService
             var client = appDef.Client;
             if (!string.IsNullOrEmpty(client))
             {
-                var accessToken = await GetAccessToken(client, cancellationToken);
+                var accessToken = await _clientAuthentication.GetAccessToken(client, cancellationToken);
                 req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
             }
 
@@ -97,30 +103,6 @@ public class ConfigCache : BackgroundService
                 _cache[spec] = configData;
             }
         }
-    }
-
-    private async Task<string> GetAccessToken(string client, CancellationToken cancellationToken)
-    {
-        var clientDef = _config.Clients.GetValueOrDefault(client);
-        if (clientDef == null)
-        {
-            throw new Exception($"No definition found for client {client}");
-        }
-
-        var content = new FormUrlEncodedContent([
-            new ("grant_type", "client_credentials"),
-            new ("client_id", clientDef.ClientId),
-            new ("client_secret", clientDef.ClientSecret),
-        ]);
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, clientDef.TokenUri);
-        req.Content = content;
-
-        using var resp = await _httpClient.SendAsync(req, cancellationToken);
-        resp.EnsureSuccessStatusCode();
-
-        var tokenData = await resp.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        return tokenData.GetProperty("access_token").GetString();
     }
 }
 

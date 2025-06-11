@@ -4,7 +4,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile("config-server-proxy-config.json", true);
+builder.Configuration.AddJsonFile("config-server-proxy-config.json", true, true);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -12,6 +12,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ConfigCache>();
+builder.Services.AddSingleton<ClientAuthentication>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCache>());
 
 builder.Services.AddOptions<ConfigServerProxyConfig>()
