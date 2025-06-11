@@ -1,9 +1,13 @@
 using ConfigServerProxy;
+using ConfigServerProxy.Components;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("config-server-proxy-config.json", true);
+
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
@@ -46,5 +50,11 @@ app.MapGet("/config/{label}/{application}-{profile}.yml", async (string applicat
 
     return Results.Content(config, "application/yaml", Encoding.UTF8);
 });
+
+app.UseAntiforgery();
+
+app.MapStaticAssets();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();
