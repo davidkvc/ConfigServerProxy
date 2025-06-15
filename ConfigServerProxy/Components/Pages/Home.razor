@@ -6,40 +6,45 @@
 
 <PageTitle>Home</PageTitle>
 
-<div style="display: flex; gap: 1rem; align-items: flex-end;">
-    <div>
-        <select id="appSelect" @bind="selectedApp" @bind:after="OnSelectionChanged">
-            <option value="">-- Select App --</option>
-            @foreach (var app in Options.Value.Apps.Keys)
-            {
-                <option value="@app">@app</option>
-            }
-        </select>
+<div class="container mt-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-auto">
+            <label for="appSelect" class="form-label mb-0">App</label>
+            <select id="appSelect" class="form-select" @bind="selectedApp" @bind:after="OnSelectionChanged">
+                <option value="">-- Select App --</option>
+                @foreach (var app in Options.Value.Apps.Keys)
+                {
+                    <option value="@app">@app</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-auto">
+            <label for="envSelect" class="form-label mb-0">Environment</label>
+            <select id="envSelect" class="form-select" @bind="selectedEnvironment" @bind:after="OnSelectionChanged">
+                <option value="">-- Select Environment --</option>
+                @foreach (var env in Options.Value.Environments.Keys)
+                {
+                    <option value="@env">@env</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-auto">
+            <label for="formatSelect" class="form-label mb-0">Format</label>
+            <select id="formatSelect" class="form-select" @bind="selectedFormat" @bind:after="OnSelectionChanged">
+                <option value="FullVerbose">FullVerbose</option>
+                <option value="ResolvedYaml">ResolvedYaml</option>
+            </select>
+        </div>
     </div>
 
-    <div>
-        <select id="envSelect" @bind="selectedEnvironment" @bind:after="OnSelectionChanged">
-            <option value="">-- Select Environment --</option>
-            @foreach (var env in Options.Value.Environments.Keys)
-            {
-                <option value="@env">@env</option>
-            }
-        </select>
-    </div>
-
-    <div>
-        <select id="formatSelect" @bind="selectedFormat" @bind:after="OnSelectionChanged">
-            <option value="FullVerbose">FullVerbose</option>
-            <option value="ResolvedYaml">ResolvedYaml</option>
-        </select>
-    </div>
-</div>
-
-<div style="margin-top: 1rem;">
-    <label for="codeArea">Config:</label>
-    <textarea id="codeArea" readonly style="width: 100%; height: 600px; font-family: 'Consolas', monospace; background: #f5f5f5; color: #222;">
+    <div class="mt-4">
+        <label for="codeArea" class="form-label">Config:</label>
+        <textarea id="codeArea" readonly class="form-control" style="height: 600px; font-family: 'Consolas', monospace; background: #f5f5f5; color: #222;">
 @formattedCode
-    </textarea>
+        </textarea>
+    </div>
 </div>
 
 @code {
