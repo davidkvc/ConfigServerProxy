@@ -23,11 +23,16 @@ public class ClientAuthentication
             throw new Exception($"No definition found for client {client}");
         }
 
-        var content = new FormUrlEncodedContent([
+        List<KeyValuePair<string, string>> parameters = [
             new ("grant_type", "client_credentials"),
             new ("client_id", clientDef.ClientId),
             new ("client_secret", clientDef.ClientSecret),
-        ]);
+        ];
+        if (!string.IsNullOrEmpty(clientDef.Scope))
+        {
+            parameters.Add(new ("scope", clientDef.Scope));
+        }
+        var content = new FormUrlEncodedContent(parameters);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, clientDef.TokenUri);
         req.Content = content;

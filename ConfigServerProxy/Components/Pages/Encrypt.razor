@@ -1,0 +1,117 @@
+﻿@page "/encrypt"
+@rendermode InteractiveServer
+@inject IOptions<ConfigServerProxyConfig> Options
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject ClientAuthentication ClientAuthentication;
+@inject ILogger<Encrypt> Logger;
+
+<h3>Encrypt</h3>
+
+<div class="d-flex gap-3 align-items-end mb-3">
+    <div>
+        <select id="envSelect" class="form-select" @bind="selectedEnvironment" @bind:after="OnSelectionChanged">
+            <option value="">-- Select Environment --</option>
+            @foreach (var env in Options.Value.Environments.Keys)
+            {
+                <option value="@env">@env</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <select id="clientSelect" class="form-select" @bind="selectedClient" @bind:after="OnSelectionChanged">
+            <option value="">-- Select Client --</option>
+            @foreach (var client in Options.Value.Clients.Keys)
+            {
+                <option value="@client">@client</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="d-flex gap-3 align-items-end mb-3">
+    <textarea placeholder="Enter secret value"
+              class="form-control"
+              @bind="secretValue"
+              @bind:event="oninput"
+              @bind:after="OnSelectionChanged"
+              style="min-height: 80px; resize: vertical;"></textarea>
+    <button class="btn btn-primary" @onclick="EncryptSecret" disabled="@(!canEncrypt)">
+        Encrypt
+    </button>
+</div>
+
+<div class="mt-3">
+@if (isEncrypting)
+{
+    <div>Encrypting...</div>
+}
+else if (!string.IsNullOrEmpty(encryptError))
+{
+    <div class="alert alert-danger" role="alert" style="min-width: 500px;">
+        <strong>Encryption failed:</strong> @encryptError
+    </div>
+}
+else
+{
+    <div class="input-group" style="max-width: 500px;">
+        <input type="text" readonly value="@encryptedValue" class="form-control" id="encryptedInput" />
+        <button class="btn btn-outline-secondary" type="button" @onclick="CopyEncryptedValue">Copy</button>
+    </div>
+}
+</div>
+
+@code {
+    private string? selectedClient;
+    private string? selectedEnvironment;
+    private string? secretValue;
+    private string encryptedValue = "";
+    private bool isEncrypting;
+    private bool canEncrypt = false;
+    private string encryptError = "";
+
+    private void OnSelectionChanged()
+    {
+        canEncrypt = !string.IsNullOrEmpty(selectedClient) 
+        && !string.IsNullOrEmpty(selectedEnvironment)
+        && !string.IsNullOrEmpty(secretValue);
+    }
+
+    private async Task EncryptSecret()
+    {
+        isEncrypting = true;
+        encryptedValue = "";
+        encryptError = "";
+        ShouldRender();
+        try
+        {
+            var accessToken = await ClientAuthentication.GetAccessToken(selectedClient!, default);
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{Options.Value.Environments[selectedEnvironment!].ConfigServerBaseUri}encrypt")
+                {
+                    Content = new StringContent(secretValue ?? "", System.Text.Encoding.UTF8, "text/plain")
+                };
+            requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            using var response = await Http.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            encryptedValue = await response.Content.ReadAsStringAsync();
+        }
+        catch (Exception ex)
+        {
+            encryptedValue = "";
+            encryptError = ex.Message;
+            Logger.LogError(ex, "Failed encrypting value");
+        }
+
+        isEncrypting = false;
+        ShouldRender();
+    }
+
+    private async Task CopyEncryptedValue()
+    {
+        if (!string.IsNullOrEmpty(encryptedValue))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", encryptedValue);
+        }
+    }
+}
